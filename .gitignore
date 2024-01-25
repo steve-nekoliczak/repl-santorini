@@ -86,6 +86,9 @@ bench.html
 # Emacs
 .projectile
 
+# Vim
+*.vim
+
 ## Release Scripts
 
 # ignore the downloaded binary files
