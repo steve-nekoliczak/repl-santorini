@@ -1,5 +1,5 @@
 module Gameplay
-  (
+  ( main
   ) where
 
 import Control.Monad.IO.Class (liftIO)
@@ -35,10 +35,10 @@ gameplayLoopT board = do
 
   boardAfterAction <-
         case state' of
-          PlaceWorkers          -> placeNextWorkerT board
-          MoveWorker player     -> moveWorkerT player board
-          BuildUp player worker -> buildUpT player worker board
-          GameOver              -> return $ Right board
+          PlaceWorkers                      -> placeNextWorkerT board
+          MoveWorker targetPlayer           -> moveWorkerT targetPlayer board
+          BuildUp targetPlayer targetWorker -> buildUpT targetPlayer targetWorker board
+          GameOver                          -> return $ Right board
 
   stateAfterAction <- get
 
@@ -52,8 +52,8 @@ gameplayLoopT board = do
 placeNextWorkerT :: Board -> GameStateT
 placeNextWorkerT board = do
   targetPosition <- case nextWorkerToPlace board of
-    Just worker -> do
-      readPosition $ "Please place " ++ show worker ++ " character"
+    Just workerToPlace -> do
+      readPosition $ "Please place " ++ show workerToPlace ++ " character"
     Nothing     -> undefined -- TODO: Add exception handling here
 
   let boardAfterAction = placeNextWorker targetPosition board
@@ -68,29 +68,27 @@ placeNextWorkerT board = do
   return boardAfterAction
 
 moveWorkerT :: Player -> Board -> GameStateT
-moveWorkerT player board = do
-  let workers = workersForPlayer player
+moveWorkerT playerToMove board = do
+  workerToMove <- readWorker $ "Select a character for " ++ show playerToMove ++ ": " ++ show (workersForPlayer playerToMove)
+  targetPosition <- readPosition $ "Select target position for " ++ show workerToMove
 
-  worker <- readWorker $ "Select a character for " ++ show player ++ ": " ++ show workers
-  targetPosition <- readPosition $ "Select target position for " ++ show worker
-
-  let boardAfterAction = moveWorker worker targetPosition board
+  let boardAfterAction = moveWorker workerToMove targetPosition board
 
   case boardAfterAction of
-    Left _            -> put $ MoveWorker player
-    Right _           -> put $ BuildUp player worker
+    Left _            -> put $ MoveWorker playerToMove
+    Right _           -> put $ BuildUp playerToMove workerToMove
 
   return boardAfterAction
 
 buildUpT :: Player -> Worker -> Board -> GameStateT
-buildUpT player worker board = do
-  targetPosition <- readPosition $ "Select target position to build for " ++ show worker
+buildUpT playerToBuild workerToBuild board = do
+  targetPosition <- readPosition $ "Select target position to build for " ++ show workerToBuild
 
-  let boardAfterAction = buildUp worker targetPosition board
+  let boardAfterAction = buildUp workerToBuild targetPosition board
 
   case boardAfterAction of
-    Left _            -> put $ BuildUp player worker
-    Right _           -> put $ MoveWorker $ nextPlayer player
+    Left _            -> put $ BuildUp playerToBuild workerToBuild
+    Right _           -> put $ MoveWorker $ nextPlayer playerToBuild
 
   return boardAfterAction
 

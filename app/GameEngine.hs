@@ -24,7 +24,6 @@ module GameEngine
   ) where
 
 import Data.Map (Map, (!), fromList, insert)
-import Data.Text (Text)
 import Prelude
 
 import Helper.Map (insertMany)
@@ -82,9 +81,9 @@ data Board = Board { grid :: Map Position Space
                    } deriving (Show, Eq)
 
 emptyBoard :: Board
-emptyBoard = Board grid workers
-  where grid = fromList [(Position (x, y), Space Ground Nothing) | x <- [XA .. XE], y <- [Y1 .. Y5]]
-        workers = fromList [(BlueMan, NotOnBoard), (BlueWoman, NotOnBoard), (IvoryMan, NotOnBoard), (IvoryWoman, NotOnBoard)]
+emptyBoard = Board newGrid newWorkers
+  where newGrid = fromList [(Position (x, y), Space Ground Nothing) | x <- [XA .. XE], y <- [Y1 .. Y5]]
+        newWorkers = fromList [(BlueMan, NotOnBoard), (BlueWoman, NotOnBoard), (IvoryMan, NotOnBoard), (IvoryWoman, NotOnBoard)]
 
 workersForPlayer :: Player -> [Worker]
 workersForPlayer BluePlayer = [BlueMan, BlueWoman]
@@ -98,7 +97,7 @@ workersInPlacementOrder :: [Worker]
 workersInPlacementOrder = [BlueMan, IvoryMan, BlueWoman, IvoryWoman]
 
 spaceOnBoard :: Position -> Board -> Space
-spaceOnBoard position board = (board.grid) ! position
+spaceOnBoard position board = board.grid ! position
 
 buildUp :: Worker -> Position -> Board -> Either BoardError Board
 buildUp buildWorker targetPosition board =
@@ -114,7 +113,7 @@ nextWorkerToPlace board =
   if null listOfUnplacedWorkers
      then Nothing
      else Just $ head listOfUnplacedWorkers
-  where workerIsPlaced worker = (board.workers) ! worker /= NotOnBoard
+  where workerIsPlaced targetWorker = board.workers ! targetWorker /= NotOnBoard
         listOfUnplacedWorkers = dropWhile workerIsPlaced workersInPlacementOrder
 
 placeWorker :: Worker -> Position -> Board -> Either BoardError Board
@@ -129,8 +128,8 @@ placeWorker workerToPlace targetPosition board =
 placeNextWorker :: Position -> Board -> Either BoardError Board
 placeNextWorker targetPosition board =
   case nextWorkerToPlace board of
-    Just worker -> placeWorker worker targetPosition board
-    Nothing     -> Left $ AllWorkersPlacedError "No workers left to place"
+    Just targetWorker -> placeWorker targetWorker targetPosition board
+    Nothing           -> Left $ AllWorkersPlacedError "No workers left to place"
 
 moveWorker :: Worker -> Position -> Board -> Either BoardError Board
 moveWorker workerToMove targetPosition board =
@@ -139,7 +138,7 @@ moveWorker workerToMove targetPosition board =
   >> spaceCanBeMovedInto targetSpace board
   >> Right (board { grid = updatedGrid, workers = updatedWorkers })
   where targetSpace = spaceOnBoard targetPosition board
-        originPosition = (board.workers) ! workerToMove
+        originPosition = board.workers ! workerToMove
         originSpace = spaceOnBoard originPosition board
         updatedOriginSpace = (originPosition, originSpace { worker = Nothing })
         updatedTargetSpace = (targetPosition, targetSpace { worker = Just workerToMove })
@@ -164,19 +163,19 @@ spaceCanBeMovedInto space board =
   >> spaceHasNoWorker space board
 
 workerCanBePlaced :: Worker -> Board -> Either BoardError Board
-workerCanBePlaced worker board =
-  case (board.workers) ! worker of
+workerCanBePlaced workerToPlace board =
+  case board.workers ! workerToPlace of
     Position _ -> Left $ AlreadyPlacedWorkerError "Can't placed worker that's already on the board"
     NotOnBoard -> Right board
 
 spaceIsAdjacent :: Worker -> Position -> Board -> Either BoardError Board
 spaceIsAdjacent _ NotOnBoard _ = Left $ InvalidPositionError "Invalid position supplied to spaceIsAdjacent"
-spaceIsAdjacent worker (Position (xTarget, yTarget)) board =
+spaceIsAdjacent targetWorker (Position (xTarget, yTarget)) board =
   let xTargetInt = fromEnum xTarget
       yTargetInt = fromEnum yTarget
       xTargetBounds = [xTargetInt - 1, xTargetInt, xTargetInt + 1]
       yTargetBounds = [yTargetInt - 1, yTargetInt, yTargetInt + 1]
-   in case (board.workers) ! worker of
+   in case board.workers ! targetWorker of
         Position (x, y) -> if fromEnum x `elem` xTargetBounds && fromEnum y `elem` yTargetBounds && (x, y) /= (xTarget, yTarget)
                               then Right board
                               else Left $ TargetSpaceNotAdjacentError "Target space needs to be adjacent to worker"
