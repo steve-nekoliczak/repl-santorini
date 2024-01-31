@@ -57,6 +57,10 @@ extra-doc-files:    CHANGELOG.md
 common warnings
     ghc-options: -Wall
 
+common deps-exts
+  default-extensions:
+    StrictData
+
 executable santorini-tui
     -- Import common warning flags.
     import:           warnings
