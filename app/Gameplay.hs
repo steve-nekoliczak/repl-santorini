@@ -53,9 +53,8 @@ gameplayLoopT board = do
 placeNextWorkerT :: Board -> GameStateT
 placeNextWorkerT board = do
   targetPosition <- case nextWorkerToPlace board of
-    Just workerToPlace -> do
-      readPosition $ "Please place " ++ show workerToPlace ++ " character"
-    Nothing     -> undefined -- TODO: Add exception handling here
+    Just workerToPlace  -> readPosition $ "Please place " ++ show workerToPlace ++ " character"
+    Nothing             -> return Nothing
 
   case targetPosition of
     Just position       -> do
@@ -69,7 +68,7 @@ placeNextWorkerT board = do
             Just _        -> put PlaceWorkers
 
       return boardAfterAction
-    Nothing       -> return (Left $ InvalidPositionError "Please select a valid position.")
+    Nothing       -> return (Left $ AllWorkersPlacedError "All workers have been placed.")
 
 moveWorkerT :: Player -> Board -> GameStateT
 moveWorkerT playerToMove board = do
