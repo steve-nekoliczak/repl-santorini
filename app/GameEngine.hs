@@ -23,8 +23,11 @@ module GameEngine
   , spaceIsAdjacent
   ) where
 
+import Data.List (uncons)
 import Data.Map (Map, (!), fromList, insert)
 import Prelude
+import Relude.Extra.Enum (next)
+import Text.Read (readMaybe)
 
 import Helper.Map (insertMany)
 
@@ -36,6 +39,7 @@ data BoardError = BuildError String
                 | TargetSpaceNotAdjacentError String
                 | AllWorkersPlacedError String
                 | InvalidPositionError String
+                | InvalidWorkerError String
                 deriving (Show, Eq)
 
 data XCoord = XA | XB | XC | XD | XE deriving (Show, Eq, Ord, Enum)
@@ -64,7 +68,10 @@ data Position = NotOnBoard | Position (XCoord, YCoord) deriving (Show, Eq, Ord)
 instance Read Position where
   readsPrec _ = convertPosition
 convertPosition :: String -> [(Position, String)]
-convertPosition [x, y] = [(Position (read [x], read [y]), "")]
+convertPosition [xChar, yChar] =
+  case (readMaybe[xChar], readMaybe[yChar]) of
+    (Just x, Just y)      -> [(Position (x, y), "")]
+    (_, _)                -> error "InvalidPosition"
 convertPosition _ = error "Invalid Position"
 
 data Level = Ground | LevelOne | LevelTwo | LevelThree | Dome deriving (Show, Eq, Ord, Enum, Bounded)
@@ -106,13 +113,13 @@ buildUp buildWorker targetPosition board =
   >> spaceCanBuildUp targetSpace board
   >> Right (board { grid = updatedGrid })
   where targetSpace = spaceOnBoard targetPosition board
-        updatedGrid = insert targetPosition (targetSpace { level = succ targetSpace.level }) board.grid
+        updatedGrid = insert targetPosition (targetSpace { level = next targetSpace.level }) board.grid
 
 nextWorkerToPlace :: Board -> Maybe Worker
 nextWorkerToPlace board =
-  if null listOfUnplacedWorkers
-     then Nothing
-     else Just $ head listOfUnplacedWorkers
+  case uncons listOfUnplacedWorkers of
+     Nothing              -> Nothing
+     Just (nextWorker, _) -> Just nextWorker
   where workerIsPlaced targetWorker = board.workers ! targetWorker /= NotOnBoard
         listOfUnplacedWorkers = dropWhile workerIsPlaced workersInPlacementOrder
 
@@ -155,7 +162,7 @@ spaceCanBuildUp :: Space -> Board -> Either BoardError Board
 spaceCanBuildUp space board =
   case space.level of
     Dome      -> Left $ BuildError "Can't build on top of a dome"
-    _         -> Right board
+    _else     -> Right board
 
 spaceCanBeMovedInto :: Space -> Board -> Either BoardError Board
 spaceCanBeMovedInto space board =

@@ -5,6 +5,7 @@ module Gameplay
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.State (StateT, get, put, runStateT)
 import Prelude
+import Text.Read (readMaybe)
 
 import GameEngine
 
@@ -47,7 +48,7 @@ gameplayLoopT board = do
     Right newBoard      ->
       case stateAfterAction of
         GameOver        -> return boardAfterAction
-        _               -> gameplayLoopT newBoard
+        _else           -> gameplayLoopT newBoard
 
 placeNextWorkerT :: Board -> GameStateT
 placeNextWorkerT board = do
@@ -56,51 +57,61 @@ placeNextWorkerT board = do
       readPosition $ "Please place " ++ show workerToPlace ++ " character"
     Nothing     -> undefined -- TODO: Add exception handling here
 
-  let boardAfterAction = placeNextWorker targetPosition board
+  case targetPosition of
+    Just position       -> do
+      let boardAfterAction = placeNextWorker position board
 
-  case boardAfterAction of
-    Left _            -> put PlaceWorkers
-    Right newBoard    ->
-      case nextWorkerToPlace newBoard of
-        Nothing       -> put $ MoveWorker BluePlayer
-        Just _        -> put PlaceWorkers
+      case boardAfterAction of
+        Left _            -> put PlaceWorkers
+        Right newBoard    ->
+          case nextWorkerToPlace newBoard of
+            Nothing       -> put $ MoveWorker BluePlayer
+            Just _        -> put PlaceWorkers
 
-  return boardAfterAction
+      return boardAfterAction
+    Nothing       -> return (Left $ InvalidPositionError "Please select a valid position.")
 
 moveWorkerT :: Player -> Board -> GameStateT
 moveWorkerT playerToMove board = do
   workerToMove <- readWorker $ "Select a character for " ++ show playerToMove ++ ": " ++ show (workersForPlayer playerToMove)
   targetPosition <- readPosition $ "Select target position for " ++ show workerToMove
 
-  let boardAfterAction = moveWorker workerToMove targetPosition board
+  case (workerToMove, targetPosition) of
+    (Nothing, _)                    -> return (Left $ InvalidWorkerError "Please select a valid worker.")
+    (Just _, Nothing)               -> return (Left $ InvalidPositionError "Please select a valid position.")
+    (Just worker', Just position)   -> do
+      let boardAfterAction = moveWorker worker' position board
 
-  case boardAfterAction of
-    Left _            -> put $ MoveWorker playerToMove
-    Right _           -> put $ BuildUp playerToMove workerToMove
+      case boardAfterAction of
+        Left _            -> put $ MoveWorker playerToMove
+        Right _           -> put $ BuildUp playerToMove worker'
 
-  return boardAfterAction
+      return boardAfterAction
 
 buildUpT :: Player -> Worker -> Board -> GameStateT
 buildUpT playerToBuild workerToBuild board = do
   targetPosition <- readPosition $ "Select target position to build for " ++ show workerToBuild
 
-  let boardAfterAction = buildUp workerToBuild targetPosition board
+  case targetPosition of
+    Just position       -> do
+      let boardAfterAction = buildUp workerToBuild position board
 
-  case boardAfterAction of
-    Left _            -> put $ BuildUp playerToBuild workerToBuild
-    Right _           -> put $ MoveWorker $ nextPlayer playerToBuild
+      case boardAfterAction of
+        Left _            -> put $ BuildUp playerToBuild workerToBuild
+        Right _           -> put $ MoveWorker $ nextPlayer playerToBuild
 
-  return boardAfterAction
+      return boardAfterAction
+    Nothing       -> return (Left $ InvalidPositionError "Please select a valid position.")
 
-readPosition :: String -> BaseStateT Position
+readPosition :: String -> BaseStateT (Maybe Position)
 readPosition message = do
   positionInput <- readInput message
-  return (read positionInput :: Position)
+  return (readMaybe positionInput :: Maybe Position)
 
-readWorker :: String -> BaseStateT Worker
+readWorker :: String -> BaseStateT (Maybe Worker)
 readWorker message = do
   workerInput <- readInput message
-  return (read workerInput :: Worker)
+  return (readMaybe workerInput :: Maybe Worker)
 
 readInput :: String -> BaseStateT String
 readInput message = do
