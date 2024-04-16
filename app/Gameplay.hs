@@ -1,3 +1,5 @@
+{-# LANGUAGE StrictData #-}
+
 module Gameplay
   ( main
   ) where
