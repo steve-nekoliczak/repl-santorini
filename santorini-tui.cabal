@@ -54,6 +54,16 @@ extra-doc-files:    CHANGELOG.md
 -- Extra source files to be distributed with the package, such as examples, or a tutorial module.
 -- extra-source-files:
 
+common shared-properties
+  default-language: Haskell2010
+
+  build-depends:
+    , base
+    , containers
+    , relude
+    , text
+    , transformers
+
 common warnings
     ghc-options: -Wall
 
@@ -61,9 +71,31 @@ common deps-exts
   default-extensions:
     StrictData
 
+test-suite spec
+  import: shared-properties
+
+  build-depends:
+    , hspec
+    , hspec-discover
+
+  type: exitcode-stdio-1.0
+  hs-source-dirs:
+    , app
+    , test
+  main-is: Spec.hs
+
+  other-modules:
+    -- app modules
+    , GameEngine
+    , Helper.Map
+
+    -- test modules
+    , Factory.BoardFactory
+    , GameEngineSpec
+
 executable santorini-tui
     -- Import common warning flags.
-    import:           warnings
+    import:           shared-properties, warnings
 
     -- .hs or .lhs file containing the Main module.
     main-is:          Main.hs
@@ -77,16 +109,6 @@ executable santorini-tui
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
 
-    -- Other library packages from which modules are imported.
-    build-depends:
-      , base
-      , containers
-      , relude
-      , text
-      , transformers
-
     -- Directories containing source files.
-    hs-source-dirs:   app
-
-    -- Base language which the package is written in.
-    default-language: Haskell2010
+    hs-source-dirs:
+      , app

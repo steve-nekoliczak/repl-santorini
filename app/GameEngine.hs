@@ -1,5 +1,6 @@
 -- HACK: This is here to silence linter warnings.
 {-# LANGUAGE OverloadedRecordDot #-}
+{-# LANGUAGE StrictData #-}
 
 module GameEngine
   ( XCoord (..)
