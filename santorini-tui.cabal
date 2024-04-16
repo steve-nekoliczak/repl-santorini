@@ -79,8 +79,19 @@ test-suite spec
     , hspec-discover
 
   type: exitcode-stdio-1.0
-  hs-source-dirs: test
+  hs-source-dirs:
+    , app
+    , test
   main-is: Spec.hs
+
+  other-modules:
+    -- app modules
+    , GameEngine
+    , Helper.Map
+
+    -- test modules
+    , Factory.BoardFactory
+    , GameEngineSpec
 
 executable santorini-tui
     -- Import common warning flags.
