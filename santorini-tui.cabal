@@ -85,10 +85,6 @@ test-suite spec
   main-is: Spec.hs
 
   other-modules:
-    -- app modules
-    , GameEngine
-    , Helper.Map
-
     -- test modules
     , Factory.BoardFactory
     , GameEngineSpec
