@@ -4,11 +4,13 @@ module Gameplay
   ( main
   ) where
 
+import System.Console.ANSI (clearScreen)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.State (StateT, get, put, runStateT)
 import Prelude
 import Text.Read (readMaybe)
 
+import DisplayEngine (boardString)
 import GameEngine
 
 data GameState =
@@ -32,7 +34,8 @@ main = do
 
 gameplayLoopT :: Board -> GameStateT
 gameplayLoopT board = do
-  liftIO $ print board
+  liftIO $ putStrLn $ boardString board
+  liftIO $ putStrLn "-----"
 
   state' <- get
 
@@ -45,8 +48,10 @@ gameplayLoopT board = do
 
   stateAfterAction <- get
 
+  liftIO $ clearScreen
   case boardAfterAction of
-    Left errorMessage   -> liftIO (print errorMessage) >> gameplayLoopT board
+    Left errorMessage   ->
+      liftIO (print errorMessage) >> gameplayLoopT board
     Right newBoard      ->
       case stateAfterAction of
         GameOver        -> return boardAfterAction
