@@ -40,8 +40,10 @@ headerLine :: String
 headerLine =
    headerSpaces ++ "|\n"
     where
-      headerSpaces = (concat . map (spaceInfoTemplate '-') $ xChars)
-      xChars = (map (last . show) $ xCoords)
+      headerSpaces = concat . map (spaceInfoTemplate '-') $ xCoordChars
+      -- TODO: This is the line that is failing the test.
+      -- It's printing double quotes around the string.
+      xCoordChars = map show $ xCoords
 
 borderLine :: String
 borderLine =
@@ -57,16 +59,16 @@ blankLine =
     where
       blankSpaces = take (widthPerSpace - 1) $ cycle " "
 
-spaceInfoTemplate :: Char -> Char -> String
-spaceInfoTemplate filler char =
+spaceInfoTemplate :: Char -> String -> String
+spaceInfoTemplate filler string =
   "|"
   ++ (take (widthPerSpace `div` 2) $ cycle [filler])
-  ++ [char]
+  ++ string
   ++ (take ((widthPerSpace `div` 2) - 1) $ cycle [filler])
 
 spaceInfo :: Position -> Board -> String
 spaceInfo position board=
-  spaceInfoTemplate ' ' workerChar
+  spaceInfoTemplate ' ' [workerChar]
     where
       space = spaceOnBoard position board
       workerChar =
