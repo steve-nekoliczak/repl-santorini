@@ -66,15 +66,15 @@ spaceInfoTemplate filler string =
 
 spaceInfo :: Position -> Board -> String
 spaceInfo position board=
-  spaceInfoTemplate ' ' [workerChar]
+  spaceInfoTemplate ' ' workerString
     where
       space = spaceOnBoard position board
-      workerChar =
+      workerString =
         case space.worker of
-          Nothing     -> ' '
+          Nothing     -> " "
           -- TODO: Format worker output character.
           -- Just worker -> show worker
-          Just worker -> 'A'
+          Just worker -> "A"
 
 boardInfoLine :: YCoord -> Board -> String
 boardInfoLine y board =
