@@ -13,6 +13,7 @@ module GameEngine
   , Board (..)
   , BoardError (..)
   , xCoords
+  , xCoordStrings
   , yCoords
   , emptyBoard
   , workersForPlayer
@@ -45,7 +46,7 @@ data BoardError = BuildError String
                 | InvalidWorkerError String
                 deriving (Show, Eq)
 
-data XCoord = XA | XB | XC | XD | XE deriving (Eq, Ord, Enum, Bounded)
+data XCoord = XA | XB | XC | XD | XE deriving (Show, Eq, Ord, Enum, Bounded)
 instance Read XCoord where
   readsPrec _ = convertXCoord
 convertXCoord :: String -> [(XCoord, String)]
@@ -55,15 +56,6 @@ convertXCoord "C" = [(XC, "")]
 convertXCoord "D" = [(XD, "")]
 convertXCoord "E" = [(XE, "")]
 convertXCoord _ = error "Invalid X coordinate"
-
-instance Show XCoord where
-  showsPrec _ = extractXCoordChar
-extractXCoordChar :: XCoord -> ShowS
-extractXCoordChar XA = shows "A"
-extractXCoordChar XB = shows "B"
-extractXCoordChar XC = shows "C"
-extractXCoordChar XD = shows "D"
-extractXCoordChar XE = shows "E"
 
 data YCoord = Y1 | Y2 | Y3 | Y4 | Y5 deriving (Show, Eq, Ord, Enum, Bounded)
 instance Read YCoord where
@@ -101,6 +93,9 @@ data Board = Board { grid :: Map Position Space
 
 xCoords :: [XCoord]
 xCoords = enumFrom (minBound::XCoord)
+
+xCoordStrings :: [String]
+xCoordStrings = ["A", "B", "C", "D", "E"]
 
 yCoords :: [YCoord]
 yCoords = enumFrom (minBound::YCoord)

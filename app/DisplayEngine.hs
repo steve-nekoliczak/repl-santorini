@@ -15,6 +15,7 @@ import GameEngine
   , YCoord (..)
   , spaceOnBoard
   , xCoords
+  , xCoordStrings
   , yCoords
   )
 
@@ -40,10 +41,7 @@ headerLine :: String
 headerLine =
    headerSpaces ++ "|\n"
     where
-      headerSpaces = concat . map (spaceInfoTemplate '-') $ xCoordChars
-      -- TODO: This is the line that is failing the test.
-      -- It's printing double quotes around the string.
-      xCoordChars = map show $ xCoords
+      headerSpaces = concat . map (spaceInfoTemplate '-') $ xCoordStrings
 
 borderLine :: String
 borderLine =
