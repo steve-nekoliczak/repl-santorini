@@ -1,11 +1,11 @@
-module DisplayEngineSpec
+module ReplUiSpec
   ( spec
   ) where
 
 import Test.Hspec
 import Prelude
 
-import DisplayEngine
+import ReplUi
 import GameEngine
 
 spec :: Spec

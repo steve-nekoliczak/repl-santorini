@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedRecordDot #-}
 
-module DisplayEngine
+module ReplUi
   ( boardString
   ) where
 

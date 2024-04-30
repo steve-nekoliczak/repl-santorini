@@ -88,7 +88,7 @@ test-suite spec
   other-modules:
     -- test modules
     , Factory.BoardFactory
-    , DisplayEngineSpec
+    , ReplUiSpec
     , GameEngineSpec
 
 executable repl-santorini
@@ -100,7 +100,7 @@ executable repl-santorini
 
     -- Modules included in this executable, other than Main.
     other-modules:
-      , DisplayEngine
+      , ReplUi
       , GameEngine
       , Gameplay
       , Helper.Map
