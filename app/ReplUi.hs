@@ -43,7 +43,7 @@ headerLine =
    "|" ++ headerSpaces ++ "|\n"
     where
       headerSpaces = concat . intersperse "|" $ spaces
-        where spaces = map (spaceInfoTemplate '-') $ xCoordStrings
+        where spaces = map (infoSpaceTemplate '-') $ xCoordStrings
 
 borderLine :: String
 borderLine =
@@ -59,15 +59,15 @@ blankLine =
     where
       blankSpaces = take (widthPerSpace - 1) $ cycle " "
 
-spaceInfoTemplate :: Char -> String -> String
-spaceInfoTemplate filler string =
+infoSpaceTemplate :: Char -> String -> String
+infoSpaceTemplate filler string =
   (take (widthPerSpace `div` 2) $ cycle [filler])
   ++ string
   ++ (take ((widthPerSpace `div` 2) - 1) $ cycle [filler])
 
-spaceInfo :: Position -> Board -> String
-spaceInfo position board=
-  spaceInfoTemplate ' ' workerString
+infoSpace :: Position -> Board -> String
+infoSpace position board=
+  infoSpaceTemplate ' ' workerString
     where
       space = spaceOnBoard position board
       workerString =
@@ -82,7 +82,7 @@ boardInfoLine y board =
    yCoordString y ++ boardSpaces ++ yCoordString y ++ "\n"
     where
       boardSpaces = (concat . intersperse "|" $ cells)
-      cells = map (\ x -> spaceInfo (Position(x, y)) board) xCoords
+      cells = map (\ x -> infoSpace (Position(x, y)) board) xCoords
 
 tableWidth :: Int
 tableWidth =
