@@ -32,7 +32,7 @@ boardString board =
 boardRow :: YCoord -> Board -> String
 boardRow y board =
   blankLines 2
-  ++ boardInfoLine y board
+  ++ infoLine y board
   ++ blankLines 2
 
 widthPerSpace :: Int
@@ -42,12 +42,15 @@ headerLine :: String
 headerLine =
    "|" ++ headerSpaces ++ "|\n"
     where
-      headerSpaces = concat . intersperse "|" $ spaces
-        where spaces = map (infoSpaceTemplate '-') $ xCoordStrings
+      headerSpaces = concat . intersperse "|" $ spaces '-' xCoordStrings
 
 borderLine :: String
 borderLine =
   (take tableWidth . cycle $ "-") ++ "\n"
+
+spaces :: Char -> [String] -> [String]
+spaces filler strings =
+  map (infoSpaceTemplate filler) $ strings
 
 blankLines :: Int -> String
 blankLines n =
@@ -65,9 +68,9 @@ infoSpaceTemplate filler string =
   ++ string
   ++ (take ((widthPerSpace `div` 2) - 1) $ cycle [filler])
 
-infoSpace :: Position -> Board -> String
-infoSpace position board=
-  infoSpaceTemplate ' ' workerString
+workerAtPositionString :: Position -> Board -> String
+workerAtPositionString position board =
+  workerString
     where
       space = spaceOnBoard position board
       workerString =
@@ -77,12 +80,12 @@ infoSpace position board=
           -- Just worker -> show worker
           Just worker -> "A"
 
-boardInfoLine :: YCoord -> Board -> String
-boardInfoLine y board =
+infoLine :: YCoord -> Board -> String
+infoLine y board =
    yCoordString y ++ boardSpaces ++ yCoordString y ++ "\n"
     where
-      boardSpaces = (concat . intersperse "|" $ cells)
-      cells = map (\ x -> infoSpace (Position(x, y)) board) xCoords
+      boardSpaces = concat . intersperse "|" $ spaces ' ' workerStrings
+      workerStrings = map (\ x -> workerAtPositionString (Position(x, y)) board) xCoords
 
 tableWidth :: Int
 tableWidth =
