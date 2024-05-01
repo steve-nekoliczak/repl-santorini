@@ -17,6 +17,7 @@ import GameEngine
   , xCoords
   , xCoordStrings
   , yCoords
+  , yCoordString
   )
 
 boardString :: Board -> String
@@ -39,9 +40,10 @@ widthPerSpace = 15
 
 headerLine :: String
 headerLine =
-   headerSpaces ++ "|\n"
+   "|" ++ headerSpaces ++ "|\n"
     where
-      headerSpaces = concat . map (spaceInfoTemplate '-') $ xCoordStrings
+      headerSpaces = concat . intersperse "|" $ spaces
+        where spaces = map (spaceInfoTemplate '-') $ xCoordStrings
 
 borderLine :: String
 borderLine =
@@ -59,8 +61,7 @@ blankLine =
 
 spaceInfoTemplate :: Char -> String -> String
 spaceInfoTemplate filler string =
-  "|"
-  ++ (take (widthPerSpace `div` 2) $ cycle [filler])
+  (take (widthPerSpace `div` 2) $ cycle [filler])
   ++ string
   ++ (take ((widthPerSpace `div` 2) - 1) $ cycle [filler])
 
@@ -78,8 +79,9 @@ spaceInfo position board=
 
 boardInfoLine :: YCoord -> Board -> String
 boardInfoLine y board =
-  concat cells ++ "|\n"
+   yCoordString y ++ boardSpaces ++ yCoordString y ++ "\n"
     where
+      boardSpaces = (concat . intersperse "|" $ cells)
       cells = map (\ x -> spaceInfo (Position(x, y)) board) xCoords
 
 tableWidth :: Int

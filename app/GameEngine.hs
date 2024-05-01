@@ -15,6 +15,7 @@ module GameEngine
   , xCoords
   , xCoordStrings
   , yCoords
+  , yCoordString
   , emptyBoard
   , workersForPlayer
   , nextPlayer
@@ -99,6 +100,15 @@ xCoordStrings = ["A", "B", "C", "D", "E"]
 
 yCoords :: [YCoord]
 yCoords = enumFrom (minBound::YCoord)
+
+-- HACK: Need to figure out how to `show` a `YCoord` without the surrounding
+-- double quotes.
+yCoordString :: YCoord -> String
+yCoordString Y1 = "1"
+yCoordString Y2 = "2"
+yCoordString Y3 = "3"
+yCoordString Y4 = "4"
+yCoordString Y5 = "5"
 
 emptyBoard :: Board
 emptyBoard = Board newGrid newWorkers
