@@ -18,17 +18,13 @@ import GameEngine
   , yCoordString
   )
 
--- *Lines - String
--- A concatenation of individual lines.
+widthPerSpace :: Int
+widthPerSpace = 15
+
 --
--- *Line - String
--- A single line of output.
+-- *Lines Functions
+-- Functions that return a concatenation of individual lines.
 --
--- *Fragments - [String]
--- A list of fragments used to build a line.
---
--- *Fragment - String
--- A fragment of a single line of output.
 
 boardLines :: Board -> String
 boardLines board =
@@ -45,46 +41,67 @@ rowLines y board =
   ++ infoLine y board
   ++ blankLines 2
 
-widthPerSpace :: Int
-widthPerSpace = 15
+blankLines :: Int -> String
+blankLines n =
+  concat . replicate n $ blankLine
+
+--
+-- *Line Functions
+-- Functions that return a single line of output.
+--
 
 headerLine :: String
 headerLine =
    "|" ++ headerSpaces ++ "|\n"
     where
-      headerSpaces = spacesLine "|" '-'  xCoordStrings
+      headerSpaces = lineTemplate "|" '-'  xCoordStrings
 
 borderLine :: String
 borderLine =
    "|" ++ borderSpaces ++ "|\n"
     where
-      borderSpaces = spacesLine "|" '-' hyphens
+      borderSpaces = lineTemplate "|" '-' hyphens
       hyphens = take (length xCoords) . cycle $ ["-"]
 
-spacesLine :: String -> Char -> [String] -> String
-spacesLine border filler strings =
-  concat . intersperse border $ spaceFragments filler strings
-
-spaceFragments :: Char -> [String] -> [String]
-spaceFragments filler strings =
-  map (spaceFragment filler) $ strings
-
-spaceFragment :: Char -> String -> String
-spaceFragment filler string =
-  (take (widthPerSpace `div` 2) $ cycle [filler])
-  ++ string
-  ++ (take ((widthPerSpace `div` 2) - 1) $ cycle [filler])
-
-blankLines :: Int -> String
-blankLines n =
-  concat . replicate n $ blankLine
+-- Line that displays:
+-- 1. The YCoord of the line in the border.
+-- 2. The level of each space in the line.
+-- 3. The worker of each space in the line (if a worker occupies the space).
+infoLine :: YCoord -> Board -> String
+infoLine y board =
+   yCoordString y ++ boardSpaces ++ yCoordString y ++ "\n"
+    where
+      boardSpaces = lineTemplate "|" ' ' workerStrings
+      workerStrings = map (\ x -> workerAtPositionString (Position(x, y)) board) xCoords
 
 blankLine :: String
 blankLine =
    "|" ++ blankSpaces ++ "|\n"
     where
-      blankSpaces = spacesLine "|" ' ' spaces
+      blankSpaces = lineTemplate "|" ' ' spaces
       spaces = take (length xCoords) . cycle $ [" "]
+
+--
+-- Template Functions
+--
+
+lineTemplate :: String -> Char -> [String] -> String
+lineTemplate border filler strings =
+  concat . intersperse border $ fragmentTemplates filler strings
+
+fragmentTemplates :: Char -> [String] -> [String]
+fragmentTemplates filler strings =
+  map (fragmentTemplate filler) $ strings
+
+fragmentTemplate :: Char -> String -> String
+fragmentTemplate filler string =
+  (take (widthPerSpace `div` 2) $ cycle [filler])
+  ++ string
+  ++ (take ((widthPerSpace `div` 2) - 1) $ cycle [filler])
+
+--
+-- Other Helper Functions
+--
 
 workerAtPositionString :: Position -> Board -> String
 workerAtPositionString position board =
@@ -97,10 +114,3 @@ workerAtPositionString position board =
           -- TODO: Format worker output character.
           -- Just worker -> show worker
           Just worker -> "A"
-
-infoLine :: YCoord -> Board -> String
-infoLine y board =
-   yCoordString y ++ boardSpaces ++ yCoordString y ++ "\n"
-    where
-      boardSpaces = spacesLine "|" ' ' workerStrings
-      workerStrings = map (\ x -> workerAtPositionString (Position(x, y)) board) xCoords
