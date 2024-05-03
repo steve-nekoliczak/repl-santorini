@@ -33,11 +33,11 @@ import GameEngine
 boardLines :: Board -> String
 boardLines board =
   headerLine
-  ++ rows
+  ++ rowsLines
   ++ headerLine
     where
-      rows = concat . intersperse borderLine $ rowLinesList
-      rowLinesList = map (\ y -> rowLines y board) (reverse yCoords)
+      rowsLines = concat . intersperse borderLine $ rowsLinesList
+      rowsLinesList = map (\ y -> rowLines y board) (reverse yCoords)
 
 rowLines :: YCoord -> Board -> String
 rowLines y board =
