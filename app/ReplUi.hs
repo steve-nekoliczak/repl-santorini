@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedRecordDot #-}
 
 module ReplUi
-  ( boardString
+  ( boardLines
   ) where
 
 import Data.List (intersperse)
@@ -10,8 +10,6 @@ import GameEngine
   ( Board (..)
   , Position (..)
   , Space (..)
-  , Worker (..)
-  , XCoord (..)
   , YCoord (..)
   , spaceOnBoard
   , xCoords
@@ -20,17 +18,29 @@ import GameEngine
   , yCoordString
   )
 
-boardString :: Board -> String
-boardString board =
+-- *Lines - String
+-- A concatenation of individual lines.
+--
+-- *Line - String
+-- A single line of output.
+--
+-- *Fragments - [String]
+-- A list of fragments used to build a line.
+--
+-- *Fragment - String
+-- A fragment of a single line of output.
+
+boardLines :: Board -> String
+boardLines board =
   headerLine
-  ++ rowLines
+  ++ rows
   ++ headerLine
     where
-      rowLines = concat (intersperse borderLine rows)
-      rows = map (\ y -> boardRow y board) yCoords
+      rows = concat . intersperse borderLine $ rowLinesList
+      rowLinesList = map (\ y -> rowLines y board) (reverse yCoords)
 
-boardRow :: YCoord -> Board -> String
-boardRow y board =
+rowLines :: YCoord -> Board -> String
+rowLines y board =
   blankLines 2
   ++ infoLine y board
   ++ blankLines 2
@@ -42,15 +52,28 @@ headerLine :: String
 headerLine =
    "|" ++ headerSpaces ++ "|\n"
     where
-      headerSpaces = concat . intersperse "|" $ spaces '-' xCoordStrings
+      headerSpaces = spacesLine "|" '-'  xCoordStrings
 
 borderLine :: String
 borderLine =
-  (take tableWidth . cycle $ "-") ++ "\n"
+   "|" ++ borderSpaces ++ "|\n"
+    where
+      borderSpaces = spacesLine "|" '-' hyphens
+      hyphens = take (length xCoords) . cycle $ ["-"]
 
-spaces :: Char -> [String] -> [String]
-spaces filler strings =
-  map (infoSpaceTemplate filler) $ strings
+spacesLine :: String -> Char -> [String] -> String
+spacesLine border filler strings =
+  concat . intersperse border $ spaceFragments filler strings
+
+spaceFragments :: Char -> [String] -> [String]
+spaceFragments filler strings =
+  map (spaceFragment filler) $ strings
+
+spaceFragment :: Char -> String -> String
+spaceFragment filler string =
+  (take (widthPerSpace `div` 2) $ cycle [filler])
+  ++ string
+  ++ (take ((widthPerSpace `div` 2) - 1) $ cycle [filler])
 
 blankLines :: Int -> String
 blankLines n =
@@ -58,15 +81,10 @@ blankLines n =
 
 blankLine :: String
 blankLine =
-  (take tableWidth . cycle $ "|" ++ blankSpaces) ++ "\n"
+   "|" ++ blankSpaces ++ "|\n"
     where
-      blankSpaces = take (widthPerSpace - 1) $ cycle " "
-
-infoSpaceTemplate :: Char -> String -> String
-infoSpaceTemplate filler string =
-  (take (widthPerSpace `div` 2) $ cycle [filler])
-  ++ string
-  ++ (take ((widthPerSpace `div` 2) - 1) $ cycle [filler])
+      blankSpaces = spacesLine "|" ' ' spaces
+      spaces = take (length xCoords) . cycle $ [" "]
 
 workerAtPositionString :: Position -> Board -> String
 workerAtPositionString position board =
@@ -84,10 +102,5 @@ infoLine :: YCoord -> Board -> String
 infoLine y board =
    yCoordString y ++ boardSpaces ++ yCoordString y ++ "\n"
     where
-      boardSpaces = concat . intersperse "|" $ spaces ' ' workerStrings
+      boardSpaces = spacesLine "|" ' ' workerStrings
       workerStrings = map (\ x -> workerAtPositionString (Position(x, y)) board) xCoords
-
-tableWidth :: Int
-tableWidth =
-  (widthPerSpace * xSpacesCount) + 1
-    where xSpacesCount = length xCoords
