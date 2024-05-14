@@ -5,6 +5,7 @@ module ReplUi
   ) where
 
 import Data.List (intersperse)
+import qualified Slist as SL
 
 import GameEngine
   ( Board (..)
@@ -61,7 +62,7 @@ borderLine =
    "|" ++ borderSpaces ++ "|\n"
     where
       borderSpaces = lineTemplate "|" '-' hyphens
-      hyphens = take (length xCoords) . cycle $ ["-"]
+      hyphens = replicate (length $ SL.slist xCoords) "-"
 
 -- Line that displays:
 -- 1. The YCoord of the line in the border.
@@ -79,7 +80,7 @@ blankLine =
    "|" ++ blankSpaces ++ "|\n"
     where
       blankSpaces = lineTemplate "|" ' ' spaces
-      spaces = take (length xCoords) . cycle $ [" "]
+      spaces = replicate (length $ SL.slist xCoords) " "
 
 --
 -- Template Functions
@@ -95,9 +96,9 @@ fragmentTemplates filler strings =
 
 fragmentTemplate :: Char -> String -> String
 fragmentTemplate filler string =
-  (take (widthPerSpace `div` 2) $ cycle [filler])
+  (replicate (widthPerSpace `div` 2) filler)
   ++ string
-  ++ (take ((widthPerSpace `div` 2) - 1) $ cycle [filler])
+  ++ (replicate ((widthPerSpace `div` 2) - 1) filler)
 
 --
 -- Other Helper Functions

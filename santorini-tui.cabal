@@ -62,6 +62,7 @@ common shared-properties
     , base
     , containers
     , relude
+    , slist
     , text
     , transformers
 
