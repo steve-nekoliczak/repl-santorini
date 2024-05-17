@@ -56,7 +56,7 @@ convertXCoord "B" = [(XB, "")]
 convertXCoord "C" = [(XC, "")]
 convertXCoord "D" = [(XD, "")]
 convertXCoord "E" = [(XE, "")]
-convertXCoord _ = error "Invalid X coordinate"
+convertXCoord _ = []
 
 data YCoord = Y1 | Y2 | Y3 | Y4 | Y5 deriving (Show, Eq, Ord, Enum, Bounded)
 instance Read YCoord where
@@ -67,7 +67,7 @@ convertYCoord "2" = [(Y2, "")]
 convertYCoord "3" = [(Y3, "")]
 convertYCoord "4" = [(Y4, "")]
 convertYCoord "5" = [(Y5, "")]
-convertYCoord _ = error "Invalid Y coordinate"
+convertYCoord _ = []
 
 data Position = NotOnBoard | Position (XCoord, YCoord) deriving (Show, Eq, Ord)
 instance Read Position where
@@ -76,8 +76,8 @@ convertPosition :: String -> [(Position, String)]
 convertPosition [xChar, yChar] =
   case (readMaybe[xChar], readMaybe[yChar]) of
     (Just x, Just y)      -> [(Position (x, y), "")]
-    (_, _)                -> error "InvalidPosition"
-convertPosition _ = error "Invalid Position"
+    (_, _)                -> []
+convertPosition _ = []
 
 data Level = Ground | LevelOne | LevelTwo | LevelThree | Dome deriving (Show, Eq, Ord, Enum, Bounded)
 
