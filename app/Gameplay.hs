@@ -10,7 +10,7 @@ import Control.Monad.Trans.State (StateT, get, put, runStateT)
 import Prelude
 import Text.Read (readMaybe)
 
-import DisplayEngine (boardString)
+import ReplUi (boardLines)
 import GameEngine
 
 data GameState =
@@ -34,7 +34,7 @@ main = do
 
 gameplayLoopT :: Board -> GameStateT
 gameplayLoopT board = do
-  liftIO $ putStrLn $ boardString board
+  liftIO $ putStrLn $ boardLines board
   liftIO $ putStrLn "-----"
 
   state' <- get
