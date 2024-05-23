@@ -11,6 +11,7 @@ import GameEngine
   ( Board (..)
   , Position (..)
   , Space (..)
+  , Worker (..)
   , YCoord (..)
   , spaceOnBoard
   , xCoords
@@ -106,12 +107,14 @@ fragmentTemplate filler string =
 
 workerAtPositionString :: Position -> Board -> String
 workerAtPositionString position board =
-  workerString
+  case space.worker of
+    Nothing             -> " "
+    Just workerAtSpace  -> workerString workerAtSpace
     where
       space = spaceOnBoard position board
-      workerString =
-        case space.worker of
-          Nothing     -> " "
-          -- TODO: Format worker output character.
-          -- Just worker -> show worker
-          Just worker -> "A"
+
+workerString :: Worker -> String
+workerString BlueMan = "M"
+workerString BlueWoman = "W"
+workerString IvoryMan = "m"
+workerString IvoryWoman = "w"
