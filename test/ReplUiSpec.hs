@@ -10,7 +10,7 @@ import GameEngine
 
 spec :: Spec
 spec = do
-  describe "boardString" $ do
+  describe "boardLines" $ do
     it "outputs the board as expected" $ do
       boardLines emptyBoard `shouldBe`
         concat
