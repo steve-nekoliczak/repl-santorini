@@ -12,6 +12,10 @@ module GameEngine
   , Worker (..)
   , Board (..)
   , BoardError (..)
+  , xCoords
+  , xCoordStrings
+  , yCoords
+  , yCoordString
   , emptyBoard
   , workersForPlayer
   , nextPlayer
@@ -43,7 +47,7 @@ data BoardError = BuildError String
                 | InvalidWorkerError String
                 deriving (Show, Eq)
 
-data XCoord = XA | XB | XC | XD | XE deriving (Show, Eq, Ord, Enum)
+data XCoord = XA | XB | XC | XD | XE deriving (Show, Eq, Ord, Enum, Bounded)
 instance Read XCoord where
   readsPrec _ = convertXCoord
 convertXCoord :: String -> [(XCoord, String)]
@@ -52,9 +56,9 @@ convertXCoord "B" = [(XB, "")]
 convertXCoord "C" = [(XC, "")]
 convertXCoord "D" = [(XD, "")]
 convertXCoord "E" = [(XE, "")]
-convertXCoord _ = error "Invalid X coordinate"
+convertXCoord _ = []
 
-data YCoord = Y1 | Y2 | Y3 | Y4 | Y5 deriving (Show, Eq, Ord, Enum)
+data YCoord = Y1 | Y2 | Y3 | Y4 | Y5 deriving (Show, Eq, Ord, Enum, Bounded)
 instance Read YCoord where
   readsPrec _ = convertYCoord
 convertYCoord :: String -> [(YCoord, String)]
@@ -63,7 +67,7 @@ convertYCoord "2" = [(Y2, "")]
 convertYCoord "3" = [(Y3, "")]
 convertYCoord "4" = [(Y4, "")]
 convertYCoord "5" = [(Y5, "")]
-convertYCoord _ = error "Invalid Y coordinate"
+convertYCoord _ = []
 
 data Position = NotOnBoard | Position (XCoord, YCoord) deriving (Show, Eq, Ord)
 instance Read Position where
@@ -72,8 +76,8 @@ convertPosition :: String -> [(Position, String)]
 convertPosition [xChar, yChar] =
   case (readMaybe[xChar], readMaybe[yChar]) of
     (Just x, Just y)      -> [(Position (x, y), "")]
-    (_, _)                -> error "InvalidPosition"
-convertPosition _ = error "Invalid Position"
+    (_, _)                -> []
+convertPosition _ = []
 
 data Level = Ground | LevelOne | LevelTwo | LevelThree | Dome deriving (Show, Eq, Ord, Enum, Bounded)
 
@@ -87,6 +91,24 @@ data Space = Space { level :: Level
 data Board = Board { grid :: Map Position Space
                    , workers :: Map Worker Position
                    } deriving (Show, Eq)
+
+xCoords :: [XCoord]
+xCoords = enumFrom (minBound::XCoord)
+
+xCoordStrings :: [String]
+xCoordStrings = ["A", "B", "C", "D", "E"]
+
+yCoords :: [YCoord]
+yCoords = enumFrom (minBound::YCoord)
+
+-- HACK: Need to figure out how to `show` a `YCoord` without the surrounding
+-- double quotes.
+yCoordString :: YCoord -> String
+yCoordString Y1 = "1"
+yCoordString Y2 = "2"
+yCoordString Y3 = "3"
+yCoordString Y4 = "4"
+yCoordString Y5 = "5"
 
 emptyBoard :: Board
 emptyBoard = Board newGrid newWorkers
