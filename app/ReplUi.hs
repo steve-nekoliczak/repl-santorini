@@ -2,22 +2,31 @@
 
 module ReplUi
   ( boardLines
+  , readPosition
+  , readWorker
+  , readInput
   ) where
 
+import Control.Monad.IO.Class (liftIO)
 import Data.List (intersperse)
 import qualified Slist as SL
+import Text.Read (readMaybe)
 
 import GameEngine
+  ( spaceOnBoard
+  , xCoords
+  , xCoordStrings
+  , yCoords
+  , yCoordString
+  )
+
+import Types
   ( Board (..)
   , Position (..)
   , Space (..)
   , Worker (..)
   , YCoord (..)
-  , spaceOnBoard
-  , xCoords
-  , xCoordStrings
-  , yCoords
-  , yCoordString
+  , BaseStateT
   )
 
 widthPerSpace :: Int
@@ -118,3 +127,22 @@ workerString BlueMan = "M"
 workerString BlueWoman = "W"
 workerString IvoryMan = "m"
 workerString IvoryWoman = "w"
+
+--
+-- Input Functions
+--
+
+readPosition :: String -> BaseStateT (Maybe Position)
+readPosition message = do
+  positionInput <- readInput message
+  return (readMaybe positionInput :: Maybe Position)
+
+readWorker :: String -> BaseStateT (Maybe Worker)
+readWorker message = do
+  workerInput <- readInput message
+  return (readMaybe workerInput :: Maybe Worker)
+
+readInput :: String -> BaseStateT String
+readInput message = do
+  liftIO $ print message
+  liftIO getLine

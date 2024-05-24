@@ -6,22 +6,12 @@ module Gameplay
 
 import System.Console.ANSI (clearScreen)
 import Control.Monad.IO.Class (liftIO)
-import Control.Monad.Trans.State (StateT, get, put, runStateT)
+import Control.Monad.Trans.State (get, put, runStateT)
 import Prelude
-import Text.Read (readMaybe)
 
-import ReplUi (boardLines)
+import ReplUi (boardLines, readWorker, readPosition)
 import GameEngine
-
-data GameState =
-    PlaceWorkers
-  | MoveWorker  { player :: Player }
-  | BuildUp     { player :: Player, worker :: Worker }
-  | GameOver
-  deriving (Show, Eq)
-
-type BaseStateT = StateT GameState IO
-type GameStateT = BaseStateT (Either BoardError Board)
+import Types (GameState (..) , GameStateT)
 
 main :: IO ()
 main = do
@@ -113,18 +103,3 @@ buildUpT playerToBuild workerToBuild board = do
 
       return boardAfterAction
     Nothing       -> return (Left $ InvalidPositionError "Please select a valid position.")
-
-readPosition :: String -> BaseStateT (Maybe Position)
-readPosition message = do
-  positionInput <- readInput message
-  return (readMaybe positionInput :: Maybe Position)
-
-readWorker :: String -> BaseStateT (Maybe Worker)
-readWorker message = do
-  workerInput <- readInput message
-  return (readMaybe workerInput :: Maybe Worker)
-
-readInput :: String -> BaseStateT String
-readInput message = do
-  liftIO $ print message
-  liftIO getLine
