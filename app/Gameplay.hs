@@ -42,7 +42,19 @@ gameplayLoopT board = do
   boardAfterAction <-
         case state' of
           PlaceWorkers                      -> placeNextWorkerT board
-          MoveWorker targetPlayer           -> moveWorkerT targetPlayer board
+
+          MoveWorker playerToMove           -> do
+            workerToMove    <- readWorker $ "Select a character for " ++ show playerToMove ++ ": " ++ show (workersForPlayer playerToMove)
+            targetPosition  <- readPosition $ "Select target position for " ++ show workerToMove
+
+            case (workerToMove, targetPosition) of
+              (Just workerToMove', Just targetPosition') ->
+                do moveWorkerT workerToMove' targetPosition' playerToMove board
+              (Nothing, _) ->
+                return (Left $ InvalidWorkerError "Please select a valid worker.")
+              (Just _, Nothing) ->
+                return (Left $ InvalidPositionError "Please select a valid position.")
+
           BuildUp targetPlayer targetWorker -> buildUpT targetPlayer targetWorker board
           GameOver                          -> return $ Right board
 
@@ -77,22 +89,15 @@ placeNextWorkerT board = do
       return boardAfterAction
     Nothing       -> return (Left $ AllWorkersPlacedError "All workers have been placed.")
 
-moveWorkerT :: Player -> Board -> GameStateT
-moveWorkerT playerToMove board = do
-  workerToMove <- readWorker $ "Select a character for " ++ show playerToMove ++ ": " ++ show (workersForPlayer playerToMove)
-  targetPosition <- readPosition $ "Select target position for " ++ show workerToMove
+moveWorkerT :: Worker -> Position -> Player -> Board -> GameStateT
+moveWorkerT workerToMove targetPosition playerToMove board = do
+  let boardAfterAction = moveWorker workerToMove targetPosition board
 
-  case (workerToMove, targetPosition) of
-    (Nothing, _)                    -> return (Left $ InvalidWorkerError "Please select a valid worker.")
-    (Just _, Nothing)               -> return (Left $ InvalidPositionError "Please select a valid position.")
-    (Just worker', Just position)   -> do
-      let boardAfterAction = moveWorker worker' position board
+  case boardAfterAction of
+    Left _            -> put $ MoveWorker playerToMove
+    Right _           -> put $ BuildUp playerToMove workerToMove
 
-      case boardAfterAction of
-        Left _            -> put $ MoveWorker playerToMove
-        Right _           -> put $ BuildUp playerToMove worker'
-
-      return boardAfterAction
+  return boardAfterAction
 
 buildUpT :: Player -> Worker -> Board -> GameStateT
 buildUpT playerToBuild workerToBuild board = do
