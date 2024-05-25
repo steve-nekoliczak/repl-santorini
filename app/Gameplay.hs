@@ -16,14 +16,14 @@ import Types (GameState (..) , GameStateT)
 main :: IO ()
 main = do
   putStrLn "Starting new game of Santorini!"
-  let startGame = gameplayLoopT emptyBoard
+  let startGame = gameplayLoop emptyBoard
   let initialState = PlaceWorkers
   newGame <- runStateT startGame initialState
   print $ fst newGame
   return ()
 
-gameplayLoopT :: Board -> GameStateT
-gameplayLoopT board = do
+gameplayLoop :: Board -> GameStateT
+gameplayLoop board = do
   liftIO $ putStrLn $ boardLines board
   liftIO $ putStrLn "-----"
 
@@ -48,11 +48,11 @@ gameplayLoopT board = do
   liftIO $ clearScreen
   case boardAfterAction of
     Left errorMessage   ->
-      liftIO (print errorMessage) >> gameplayLoopT board
+      liftIO (print errorMessage) >> gameplayLoop board
     Right newBoard      ->
       case stateAfterAction of
         GameOver        -> return boardAfterAction
-        _else           -> gameplayLoopT newBoard
+        _else           -> gameplayLoop newBoard
 
 handlePlaceWorkersState :: Board -> GameStateT
 handlePlaceWorkersState board = do
