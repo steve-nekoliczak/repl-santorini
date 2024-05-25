@@ -40,7 +40,7 @@ gameplayLoopT board = do
 
             case targetPosition of
               Just position -> do
-                placeNextWorkerT position board
+                placeNextWorkerInGame position board
               Nothing ->
                 return (Left $ AllWorkersPlacedError "All workers have been placed.")
 
@@ -50,7 +50,7 @@ gameplayLoopT board = do
 
             case (workerToMove, targetPosition) of
               (Just workerToMove', Just targetPosition') -> do
-                moveWorkerT playerToMove workerToMove' targetPosition' board
+                moveWorkerInGame playerToMove workerToMove' targetPosition' board
               (Nothing, _) ->
                 return (Left $ InvalidWorkerError "Please select a valid worker.")
               (Just _, Nothing) ->
@@ -61,7 +61,7 @@ gameplayLoopT board = do
 
             case targetPosition of
               Just position -> do
-                buildUpT targetPlayer targetWorker position board
+                buildUpInGame targetPlayer targetWorker position board
               Nothing ->
                 return (Left $ InvalidPositionError "Please select a valid position.")
 
@@ -79,8 +79,8 @@ gameplayLoopT board = do
         GameOver        -> return boardAfterAction
         _else           -> gameplayLoopT newBoard
 
-placeNextWorkerT :: Position -> Board -> GameStateT
-placeNextWorkerT targetPosition board = do
+placeNextWorkerInGame :: Position -> Board -> GameStateT
+placeNextWorkerInGame targetPosition board = do
   let boardAfterAction = placeNextWorker targetPosition board
 
   case boardAfterAction of
@@ -92,8 +92,8 @@ placeNextWorkerT targetPosition board = do
 
   return boardAfterAction
 
-moveWorkerT :: Player -> Worker -> Position -> Board -> GameStateT
-moveWorkerT playerToMove workerToMove targetPosition board = do
+moveWorkerInGame :: Player -> Worker -> Position -> Board -> GameStateT
+moveWorkerInGame playerToMove workerToMove targetPosition board = do
   let boardAfterAction = moveWorker workerToMove targetPosition board
 
   case boardAfterAction of
@@ -102,8 +102,8 @@ moveWorkerT playerToMove workerToMove targetPosition board = do
 
   return boardAfterAction
 
-buildUpT :: Player -> Worker -> Position -> Board -> GameStateT
-buildUpT playerToBuild workerToBuild targetPosition board = do
+buildUpInGame :: Player -> Worker -> Position -> Board -> GameStateT
+buildUpInGame playerToBuild workerToBuild targetPosition board = do
   let boardAfterAction = buildUp workerToBuild targetPosition board
 
   case boardAfterAction of
