@@ -2,6 +2,9 @@
 
 module ReplUi
   ( boardLines
+  , clearScreen
+  , displayBoard
+  , displayBoardError
   , readPosition
   , readWorker
   , readInput
@@ -10,6 +13,7 @@ module ReplUi
 import Control.Monad.IO.Class (liftIO)
 import Data.List (intersperse)
 import qualified Slist as SL
+import qualified System.Console.ANSI as ANSI
 import Text.Read (readMaybe)
 
 import GameEngine
@@ -22,6 +26,7 @@ import GameEngine
 
 import Types
   ( Board (..)
+  , BoardError (..)
   , Position (..)
   , Space (..)
   , Worker (..)
@@ -31,6 +36,19 @@ import Types
 
 widthPerSpace :: Int
 widthPerSpace = 15
+
+displayBoard :: Board -> BaseStateT ()
+displayBoard board = do
+  liftIO $ putStrLn $ boardLines board
+  liftIO $ putStrLn "-----"
+
+displayBoardError :: BoardError -> BaseStateT ()
+displayBoardError boardError =
+  liftIO $ print boardError
+
+clearScreen :: BaseStateT ()
+clearScreen = do
+  liftIO $ ANSI.clearScreen
 
 --
 -- *Lines Functions

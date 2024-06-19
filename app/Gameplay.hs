@@ -1,58 +1,69 @@
 {-# LANGUAGE StrictData #-}
 
 module Gameplay
-  ( main
+  ( playGame
   ) where
 
-import System.Console.ANSI (clearScreen)
 import Control.Monad.IO.Class (liftIO)
-import Control.Monad.Trans.State (get, put, runStateT)
+import Control.Monad.Trans.State (get, put, evalStateT)
 import Prelude
 
-import ReplUi (boardLines, readWorker, readPosition)
+import ReplUi
+  ( clearScreen
+  , displayBoard
+  , displayBoardError
+  , readWorker
+  , readPosition
+  )
 import GameEngine
 import Types (GameState (..) , GameStateT)
 
-main :: IO ()
-main = do
-  putStrLn "Starting new game of Santorini!"
+playGame :: IO ()
+playGame = do
   let startGame = gameplayLoop emptyBoard
   let initialState = PlaceWorkers
-  newGame <- runStateT startGame initialState
-  print $ fst newGame
+
+  _ <- evalStateT startGame initialState
+
   return ()
 
 gameplayLoop :: Board -> GameStateT
 gameplayLoop board = do
-  liftIO $ putStrLn $ boardLines board
-  liftIO $ putStrLn "-----"
+  displayBoard board
 
-  state' <- get
+  boardAfterTurn <- playTurn board
+
+  clearScreen
+
+  case boardAfterTurn of
+    Left errorMessage -> do
+      displayBoardError errorMessage
+      gameplayLoop board
+    Right newBoard -> do
+      gameStateAfterAction <- get
+      case gameStateAfterAction of
+        GameOver ->
+          return boardAfterTurn
+        _else ->
+          gameplayLoop newBoard
+
+playTurn :: Board -> GameStateT
+playTurn board = do
+  gameState <- get
 
   boardAfterAction <-
-    case state' of
+    case gameState of
       PlaceWorkers ->
         handlePlaceWorkersState board
       MoveWorker playerToMove ->
         handleMoveWorkerState playerToMove board
       BuildUp playerToBuild workerToBuild ->
         handleBuildUpState playerToBuild workerToBuild board
+      -- TODO: Change `GameOver` state to `WonGame { player :: Player }` and use here.
       GameOver ->
         return $ Right board
 
-  stateAfterAction <- get
-
-  liftIO $ clearScreen
-
-  case boardAfterAction of
-    Left errorMessage ->
-      liftIO (print errorMessage) >> gameplayLoop board
-    Right newBoard ->
-      case stateAfterAction of
-        GameOver ->
-          return boardAfterAction
-        _else ->
-          gameplayLoop newBoard
+  return boardAfterAction
 
 handlePlaceWorkersState :: Board -> GameStateT
 handlePlaceWorkersState board = do
@@ -106,6 +117,7 @@ moveWorkerInGame playerToMove workerToMove targetPosition board = do
     Left _ ->
       put $ MoveWorker playerToMove
     Right _ ->
+      -- TODO: Add check for game won here and use `WonGame player`.
       put $ BuildUp playerToMove workerToMove
 
   return boardAfterAction
