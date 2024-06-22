@@ -5,6 +5,7 @@ module ReplUi
   , clearScreen
   , displayBoard
   , displayBoardError
+  , displayMessage
   , readPosition
   , readWorker
   , readInput
@@ -45,6 +46,10 @@ displayBoard board = do
 displayBoardError :: BoardError -> BaseStateT ()
 displayBoardError boardError =
   liftIO $ print boardError
+
+displayMessage :: String -> BaseStateT ()
+displayMessage message =
+  liftIO $ print message
 
 clearScreen :: BaseStateT ()
 clearScreen = do

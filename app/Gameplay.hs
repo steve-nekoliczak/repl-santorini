@@ -12,6 +12,7 @@ import ReplUi
   ( clearScreen
   , displayBoard
   , displayBoardError
+  , displayMessage
   , readWorker
   , readPosition
   )
@@ -42,7 +43,8 @@ gameplayLoop board = do
     Right newBoard -> do
       gameStateAfterAction <- get
       case gameStateAfterAction of
-        GameOver ->
+        WonGame winningPlayer -> do
+          displayMessage $ show winningPlayer ++ " wins!"
           return boardAfterTurn
         _else ->
           gameplayLoop newBoard
@@ -59,8 +61,7 @@ playTurn board = do
         handleMoveWorkerState playerToMove board
       BuildUp playerToBuild workerToBuild ->
         handleBuildUpState playerToBuild workerToBuild board
-      -- TODO: Change `GameOver` state to `WonGame { player :: Player }` and use here.
-      GameOver ->
+      WonGame _winningPlayer ->
         return $ Right board
 
   return boardAfterAction

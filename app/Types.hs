@@ -81,7 +81,7 @@ data GameState =
     PlaceWorkers
   | MoveWorker  { player :: Player }
   | BuildUp     { player :: Player, buildWorker :: Worker }
-  | GameOver
+  | WonGame     { player :: Player }
   deriving (Show, Eq)
 
 type BaseStateT = StateT GameState IO
