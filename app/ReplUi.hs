@@ -2,26 +2,58 @@
 
 module ReplUi
   ( boardLines
+  , clearScreen
+  , displayBoard
+  , displayBoardError
+  , displayMessage
+  , readPosition
+  , readWorker
+  , readInput
   ) where
 
+import Control.Monad.IO.Class (liftIO)
 import Data.List (intersperse)
 import qualified Slist as SL
+import qualified System.Console.ANSI as ANSI
+import Text.Read (readMaybe)
 
 import GameEngine
-  ( Board (..)
-  , Position (..)
-  , Space (..)
-  , Worker (..)
-  , YCoord (..)
-  , spaceOnBoard
+  ( spaceOnBoard
   , xCoords
   , xCoordStrings
   , yCoords
   , yCoordString
   )
 
+import Types
+  ( Board (..)
+  , BoardError (..)
+  , Position (..)
+  , Space (..)
+  , Worker (..)
+  , YCoord (..)
+  , BaseStateT
+  )
+
 widthPerSpace :: Int
 widthPerSpace = 15
+
+displayBoard :: Board -> BaseStateT ()
+displayBoard board = do
+  liftIO $ putStrLn $ boardLines board
+  liftIO $ putStrLn "-----"
+
+displayBoardError :: BoardError -> BaseStateT ()
+displayBoardError boardError =
+  liftIO $ print boardError
+
+displayMessage :: String -> BaseStateT ()
+displayMessage message =
+  liftIO $ print message
+
+clearScreen :: BaseStateT ()
+clearScreen = do
+  liftIO $ ANSI.clearScreen
 
 --
 -- *Lines Functions
@@ -118,3 +150,22 @@ workerString BlueMan = "M"
 workerString BlueWoman = "W"
 workerString IvoryMan = "m"
 workerString IvoryWoman = "w"
+
+--
+-- Input Functions
+--
+
+readPosition :: String -> BaseStateT (Maybe Position)
+readPosition message = do
+  positionInput <- readInput message
+  return (readMaybe positionInput :: Maybe Position)
+
+readWorker :: String -> BaseStateT (Maybe Worker)
+readWorker message = do
+  workerInput <- readInput message
+  return (readMaybe workerInput :: Maybe Worker)
+
+readInput :: String -> BaseStateT String
+readInput message = do
+  liftIO $ print message
+  liftIO getLine

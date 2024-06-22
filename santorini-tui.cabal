@@ -105,6 +105,7 @@ executable repl-santorini
       , GameEngine
       , Gameplay
       , Helper.Map
+      , Types
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:

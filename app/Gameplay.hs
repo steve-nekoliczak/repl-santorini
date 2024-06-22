@@ -1,125 +1,146 @@
 {-# LANGUAGE StrictData #-}
 
 module Gameplay
-  ( main
+  ( playGame
   ) where
 
-import System.Console.ANSI (clearScreen)
 import Control.Monad.IO.Class (liftIO)
-import Control.Monad.Trans.State (StateT, get, put, runStateT)
+import Control.Monad.Trans.State (get, put, evalStateT)
 import Prelude
-import Text.Read (readMaybe)
 
-import ReplUi (boardLines)
+import ReplUi
+  ( clearScreen
+  , displayBoard
+  , displayBoardError
+  , displayMessage
+  , readWorker
+  , readPosition
+  )
 import GameEngine
+import Types (GameState (..) , GameStateT)
 
-data GameState =
-    PlaceWorkers
-  | MoveWorker  { player :: Player }
-  | BuildUp     { player :: Player, worker :: Worker }
-  | GameOver
-  deriving (Show, Eq)
-
-type BaseStateT = StateT GameState IO
-type GameStateT = BaseStateT (Either BoardError Board)
-
-main :: IO ()
-main = do
-  putStrLn "Starting new game of Santorini!"
-  let startGame = gameplayLoopT emptyBoard
+playGame :: IO ()
+playGame = do
+  let startGame = gameplayLoop emptyBoard
   let initialState = PlaceWorkers
-  newGame <- runStateT startGame initialState
-  print $ fst newGame
+
+  _ <- evalStateT startGame initialState
+
   return ()
 
-gameplayLoopT :: Board -> GameStateT
-gameplayLoopT board = do
-  liftIO $ putStrLn $ boardLines board
-  liftIO $ putStrLn "-----"
+gameplayLoop :: Board -> GameStateT
+gameplayLoop board = do
+  displayBoard board
 
-  state' <- get
+  boardAfterTurn <- playTurn board
+
+  clearScreen
+
+  case boardAfterTurn of
+    Left errorMessage -> do
+      displayBoardError errorMessage
+      gameplayLoop board
+    Right newBoard -> do
+      gameStateAfterAction <- get
+      case gameStateAfterAction of
+        WonGame winningPlayer -> do
+          displayMessage $ show winningPlayer ++ " wins!"
+          return boardAfterTurn
+        _else ->
+          gameplayLoop newBoard
+
+playTurn :: Board -> GameStateT
+playTurn board = do
+  gameState <- get
 
   boardAfterAction <-
-        case state' of
-          PlaceWorkers                      -> placeNextWorkerT board
-          MoveWorker targetPlayer           -> moveWorkerT targetPlayer board
-          BuildUp targetPlayer targetWorker -> buildUpT targetPlayer targetWorker board
-          GameOver                          -> return $ Right board
+    case gameState of
+      PlaceWorkers ->
+        handlePlaceWorkersState board
+      MoveWorker playerToMove ->
+        handleMoveWorkerState playerToMove board
+      BuildUp playerToBuild workerToBuild ->
+        handleBuildUpState playerToBuild workerToBuild board
+      WonGame _winningPlayer ->
+        return $ Right board
 
-  stateAfterAction <- get
+  return boardAfterAction
 
-  liftIO $ clearScreen
-  case boardAfterAction of
-    Left errorMessage   ->
-      liftIO (print errorMessage) >> gameplayLoopT board
-    Right newBoard      ->
-      case stateAfterAction of
-        GameOver        -> return boardAfterAction
-        _else           -> gameplayLoopT newBoard
-
-placeNextWorkerT :: Board -> GameStateT
-placeNextWorkerT board = do
-  targetPosition <- case nextWorkerToPlace board of
-    Just workerToPlace  -> readPosition $ "Please place " ++ show workerToPlace ++ " character"
-    Nothing             -> return Nothing
+handlePlaceWorkersState :: Board -> GameStateT
+handlePlaceWorkersState board = do
+  targetPosition <-
+    case nextWorkerToPlace board of
+      Just workerToPlace ->
+        readPosition $ "Please place " ++ show workerToPlace ++ " character"
+      Nothing ->
+        return Nothing
 
   case targetPosition of
-    Just position       -> do
-      let boardAfterAction = placeNextWorker position board
+    Just position ->
+      placeNextWorkerInGame position board
+    Nothing ->
+      return (Left $ AllWorkersPlacedError "All workers have been placed.")
 
-      case boardAfterAction of
-        Left _            -> put PlaceWorkers
-        Right newBoard    ->
-          case nextWorkerToPlace newBoard of
-            Nothing       -> put $ MoveWorker BluePlayer
-            Just _        -> put PlaceWorkers
+placeNextWorkerInGame :: Position -> Board -> GameStateT
+placeNextWorkerInGame targetPosition board = do
+  let boardAfterAction = placeNextWorker targetPosition board
 
-      return boardAfterAction
-    Nothing       -> return (Left $ AllWorkersPlacedError "All workers have been placed.")
+  case boardAfterAction of
+    Left _ ->
+      put PlaceWorkers
+    Right newBoard ->
+      case nextWorkerToPlace newBoard of
+        Nothing ->
+          put $ MoveWorker BluePlayer
+        Just _ ->
+          put PlaceWorkers
 
-moveWorkerT :: Player -> Board -> GameStateT
-moveWorkerT playerToMove board = do
-  workerToMove <- readWorker $ "Select a character for " ++ show playerToMove ++ ": " ++ show (workersForPlayer playerToMove)
-  targetPosition <- readPosition $ "Select target position for " ++ show workerToMove
+  return boardAfterAction
+
+handleMoveWorkerState :: Player -> Board -> GameStateT
+handleMoveWorkerState playerToMove board = do
+  workerToMove    <- readWorker $ "Select a character for " ++ show playerToMove ++ ": " ++ show (workersForPlayer playerToMove)
+  targetPosition  <- readPosition $ "Select target position for " ++ show workerToMove
 
   case (workerToMove, targetPosition) of
-    (Nothing, _)                    -> return (Left $ InvalidWorkerError "Please select a valid worker.")
-    (Just _, Nothing)               -> return (Left $ InvalidPositionError "Please select a valid position.")
-    (Just worker', Just position)   -> do
-      let boardAfterAction = moveWorker worker' position board
+    (Just workerToMove', Just targetPosition') ->
+      moveWorkerInGame playerToMove workerToMove' targetPosition' board
+    (Nothing, _) ->
+      return (Left $ InvalidWorkerError "Please select a valid worker.")
+    (Just _, Nothing) ->
+      return (Left $ InvalidPositionError "Please select a valid position.")
 
-      case boardAfterAction of
-        Left _            -> put $ MoveWorker playerToMove
-        Right _           -> put $ BuildUp playerToMove worker'
+moveWorkerInGame :: Player -> Worker -> Position -> Board -> GameStateT
+moveWorkerInGame playerToMove workerToMove targetPosition board = do
+  let boardAfterAction = moveWorker workerToMove targetPosition board
 
-      return boardAfterAction
+  case boardAfterAction of
+    Left _ ->
+      put $ MoveWorker playerToMove
+    Right _ ->
+      -- TODO: Add check for game won here and use `WonGame player`.
+      put $ BuildUp playerToMove workerToMove
 
-buildUpT :: Player -> Worker -> Board -> GameStateT
-buildUpT playerToBuild workerToBuild board = do
+  return boardAfterAction
+
+handleBuildUpState :: Player -> Worker -> Board -> GameStateT
+handleBuildUpState playerToBuild workerToBuild board = do
   targetPosition <- readPosition $ "Select target position to build for " ++ show workerToBuild
 
   case targetPosition of
-    Just position       -> do
-      let boardAfterAction = buildUp workerToBuild position board
+    Just position ->
+      buildUpInGame playerToBuild workerToBuild position board
+    Nothing ->
+      return (Left $ InvalidPositionError "Please select a valid position.")
 
-      case boardAfterAction of
-        Left _            -> put $ BuildUp playerToBuild workerToBuild
-        Right _           -> put $ MoveWorker $ nextPlayer playerToBuild
+buildUpInGame :: Player -> Worker -> Position -> Board -> GameStateT
+buildUpInGame playerToBuild workerToBuild targetPosition board = do
+  let boardAfterAction = buildUp workerToBuild targetPosition board
 
-      return boardAfterAction
-    Nothing       -> return (Left $ InvalidPositionError "Please select a valid position.")
+  case boardAfterAction of
+    Left _ ->
+      put $ BuildUp playerToBuild workerToBuild
+    Right _ ->
+      put $ MoveWorker $ nextPlayer playerToBuild
 
-readPosition :: String -> BaseStateT (Maybe Position)
-readPosition message = do
-  positionInput <- readInput message
-  return (readMaybe positionInput :: Maybe Position)
-
-readWorker :: String -> BaseStateT (Maybe Worker)
-readWorker message = do
-  workerInput <- readInput message
-  return (readMaybe workerInput :: Maybe Worker)
-
-readInput :: String -> BaseStateT String
-readInput message = do
-  liftIO $ print message
-  liftIO getLine
+  return boardAfterAction

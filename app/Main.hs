@@ -1,6 +1,6 @@
 module Main where
 
-import qualified Gameplay (main)
+import qualified Gameplay (playGame)
 
 main :: IO ()
-main = Gameplay.main
+main = Gameplay.playGame
